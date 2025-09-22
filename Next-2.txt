@@ -245,12 +245,37 @@ const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
   Поскольку серверные компоненты работают на сервере, вы можете напрямую обращаться
 к базе данных без  дополнительного уровня API. Это избавляет вас от необходимости писать
 и поддерживать дополнительный код.
-
-
-
 ============
 Извлечение данных для страницы обзора панели мониторинга
 Теперь, когда вы знакомы с различными способами получения данных, давайте извлечём данные для страницы обзора панели мониторинга. Перейдите по адресу /app/dashboard/page.tsx, вставьте следующий код и изучите его:
+import { Card } from '@/app/ui/dashboard/cards';
+import RevenueChart from '@/app/ui/dashboard/revenue-chart';
+import LatestInvoices from '@/app/ui/dashboard/latest-invoices';
+import { lusitana } from '@/app/ui/fonts';
+
+export default async function Page() {
+  return (
+    <main>
+      <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
+        Dashboard
+      </h1>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* <Card title="Collected" value={totalPaidInvoices} type="collected" /> */}
+        {/* <Card title="Pending" value={totalPendingInvoices} type="pending" /> */}
+        {/* <Card title="Total Invoices" value={numberOfInvoices} type="invoices" /> */}
+        {/* <Card
+          title="Total Customers"
+          value={numberOfCustomers}
+          type="customers"
+        /> */}
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-8">
+        {/* <RevenueChart revenue={revenue}  /> */}
+        {/* <LatestInvoices latestInvoices={latestInvoices} /> */}
+      </div>
+    </main>
+  );
+}
 
 Приведённый выше код намеренно закомментирован. Теперь мы рассмотрим каждый фрагмент по отдельности.
 page — это асинхронный серверный компонент. Это позволяет использовать await для получения данных.
@@ -258,5 +283,38 @@ page — это асинхронный серверный компонент. Э
 ==================
 Выборка данных для <RevenueChart/>
 Чтобы получить данные для компонента <RevenueChart/>, импортируйте функцию fetchRevenue из data.ts и вызовите её внутри своего компонента:
+
+import { fetchRevenue } from '@/app/lib/data';
+export default async function Page() {
+  const revenue = await fetchRevenue();
+  // ...
+Раскомментируйте <RevenueChart/>компонент.
+Перейдите к файлу компонента ( /app/ui/dashboard/revenue-chart.tsx) и раскомментируйте
+код внутри него.
+Проверьте localhost:3000, и вы увидите диаграмму, которая использует revenueданные.
+======================
+Извлечение данных для<LatestInvoices/>
+Для <LatestInvoices /> компонента нам необходимо получить 5 последних счетов-фактур, отсортированных по дате.
+
+Вы можете получить все счета и отсортировать их с помощью JavaScript. Это не проблема,
+поскольку объём наших данных небольшой, но по мере роста вашего приложения объём данных,
+передаваемых при каждом запросе, и объём JavaScript, необходимый для их обработки,
+может значительно увеличиться.
+
+Вместо того, чтобы сортировать последние счета в памяти, вы можете использовать
+SQL-запрос для извлечения только последних 5 счетов. Например, вот SQL-запрос
+из вашего data.ts файла:
+
+
+
+
+
+
+
+
+
+
+
+
 
 
