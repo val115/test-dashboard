@@ -1,5 +1,8 @@
 https://nextjs.org/learn/dashboard-app/getting-started
 
+https://reactdev.ru/libs/nextjs/app-router/fetching-data/#_5
+===============
+
 npm install -g pnpm
 npx create-next-app@latest nextjs-dashboard --example "https://github.com/vercel/next-learn/tree/main/dashboard/starter-example" --use-pnpm
 pnpm dev
@@ -233,12 +236,115 @@ Continue to Dashboard  -      и выберите вкладку
 Перейдите по ссылке /app/lib/data.ts. Здесь вы увидите, что мы используем функциюpostgres .sql позволяет вам делать запросы к вашей базе данных:
 
 Вы можете вызывать sqlлюбой объект на сервере, например, компонент сервера. Но для облегчения навигации по компонентам мы сохранили все запросы к данным в data.tsфайле, и вы можете импортировать их в компоненты.
-============
-Извлечение данных для страницы обзора панели мониторинга
+
+========Получение данных для страницы обзора дашборда====
 Теперь, когда вы знакомы с различными способами получения данных, давайте извлечём данные для страницы обзора панели мониторинга. Перейдите по адресу /app/dashboard/page.tsx, вставьте следующий код и изучите его:
 
-commit - 2
-git branch
+import { Card } from '@/app/ui/dashboard/cards';
+import RevenueChart from '@/app/ui/dashboard/revenue-chart';
+import LatestInvoices from '@/app/ui/dashboard/latest-invoices';
+import { lusitana } from '@/app/ui/fonts';
+
+export default async function Page() {
+    return (
+        <main>
+            <h1
+                className={`${lusitana.className} mb-4 text-xl md:text-2xl`}
+            >
+                Dashboard
+            </h1>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {/* <Card title="Collected" value={totalPaidInvoices} type="collected" /> */}
+                {/* <Card title="Pending" value={totalPendingInvoices} type="pending" /> */}
+                {/* <Card title="Total Invoices" value={numberOfInvoices} type="invoices" /> */}
+                {/* <Card
+          title="Total Customers"
+          value={numberOfCustomers}
+          type="customers"
+        /> */}
+            </div>
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-8">
+                {/* <RevenueChart revenue={revenue}  /> */}
+                {/* <LatestInvoices latestInvoices={latestInvoices} /> */}
+            </div>
+        </main>
+    );
+}
+==========
+page - это серверный компонент async. Он позволяет использовать await для получения данных.
+Также есть 3 компонента, которые получают данные: <Card>, <RevenueChart> и <LatestInvoices>. В настоящее время они закомментированы и пока не реализованы.
+----------------
+Получение данных для <RevenueChart/>
+
+import { fetchRevenue } from '@/app/lib/data';
+
+export default async function Page() {
+    const revenue = await fetchRevenue();
+-----------
+Далее сделаем следующее:
+Откомментируйте компонент <RevenueChart/>.
+Перейдите к файлу компонента (/app/ui/dashboard/revenue-chart.tsx) и откомментируйте код внутри него.
+Проверьте localhost:3000 и вы должны увидеть график, использующий данные revenue.
+
+======Получение данных для <LatestInvoices/>============
+
+Для компонента <LatestInvoices /> нам нужно получить 5 последних счетов-фактур, отсортированных по дате.
+
+Вы можете получить все счета и отсортировать их с помощью JavaScript. Это не
+ проблема, поскольку наши данные невелики, но по мере роста вашего приложения 
+ может значительно увеличиться объем данных, передаваемых при каждом запросе, 
+ и JavaScript, необходимый для их сортировки.
+
+Вместо того чтобы сортировать последние счета в памяти, вы можете использовать 
+SQL-запрос, чтобы получить только 5 последних счетов. Например, вот SQL-запрос 
+из вашего файла data.ts:
+
+import {
+    fetchRevenue,
+    fetchLatestInvoices,
+} from '@/app/lib/data';
+
+export default async function Page() {
+    const revenue = await fetchRevenue();
+    const latestInvoices = await fetchLatestInvoices()
+  -------------
+    Затем откомментируйте компонент <LatestInvoices />. Вам также нужно будет откомментировать соответствующий код в самом компоненте <LatestInvoices />, расположенном по адресу /app/ui/dashboard/latest-invoices.
+
+    =========Практика: Получение данных для компонентов <Card>===============
+
+Теперь настала ваша очередь получить данные для компонентов <Card>. На карточках будут отображаться следующие данные:
+
+Общая сумма собранных счетов.
+Общая сумма счетов, ожидающих оплаты.
+Общее количество счетов-фактур.
+Общее количество клиентов.
+Опять же, у вас может возникнуть соблазн получить все счета и клиентов и использовать JavaScript для работы с данными. Например, вы можете использовать Array.length для получения общего количества счетов и клиентов:
+
+const totalInvoices = allInvoices.length;
+const totalCustomers = allCustomers.length;
+
+Но с помощью SQL вы можете получить только те данные, которые вам нужны. 
+Это немного дольше, чем использование Array.length, но это означает, 
+что во время запроса нужно передать меньше данных. Это альтернатива SQL:
+
+Функция, которую вам нужно импортировать, называется fetchCardData. 
+Вам нужно будет деструктурировать значения, возвращаемые функцией.
+----------------
+Однако... есть две вещи, о которых вы должны знать:
+
+1. Запросы данных непреднамеренно блокируют друг друга, создавая водопад запросов.
+2. По умолчанию Next.js предусматривает маршруты для повышения производительности,
+это называется Static Rendering. Таким образом, если ваши данные изменятся, 
+они не будут отражены в дашборде.
+
+Давайте обсудим номер 1 в этой главе, а затем подробно рассмотрим номер 2 в следующей главе.
+
+
+
+
+
+
+
 
 
 
